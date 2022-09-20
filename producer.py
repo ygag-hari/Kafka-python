@@ -1,15 +1,20 @@
-from time import sleep
-from json import dumps
-from kafka import KafkaProducer
+import time
+import json
+from confluent_kafka import Producer
+import datetime
 
 
 # initializing the Kafka producer
-my_producer = KafkaProducer(
-    bootstrap_servers = ['localhost:9092'],
-    value_serializer = lambda x:dumps(x).encode('utf-8')
-)
+p = Producer({'bootstrap.servers': 'kafka:29092'})
 
-for n in range(500):
-    my_data = {'num' : n}
-    my_producer.send('testnum', value = my_data)
-    sleep(5)
+data = {
+    "date_added": "2022-02-23",
+}
+
+for _ in range(100):
+    print("Producing epoch {}".format(_))
+    m=json.dumps(data)
+    p.poll(1)
+    p.produce('ygag-orders', m.encode('utf-8'))
+    p.flush()
+    time.sleep(3)

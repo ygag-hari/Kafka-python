@@ -1,16 +1,27 @@
-from json import loads
-from kafka import KafkaConsumer
+import json
+from confluent_kafka import Consumer
 
 
-my_consumer = KafkaConsumer(
-    'testnum',
-    bootstrap_servers = ['localhost : 9092'],
-    auto_offset_reset = 'earliest',
-    enable_auto_commit = True,
-    group_id = 'my-group',
-    value_deserializer = lambda x : loads(x.decode('utf-8'))
-)
+c = Consumer({
+    'bootstrap.servers':'kafka:9092',
+    'group.id':'python-consumer',
+    'auto.offset.reset':'earliest'
+})
 
-for message in my_consumer:
-    message = message.value
-    print(message)
+print('Available topics to consume: ', c.list_topics().topics)
+c.subscribe(['ygag-orders'])
+
+while True:
+    msg=c.poll(1.0) #timeout
+    if msg is None:
+        continue
+    if msg.error():
+        print('Error: {}'.format(msg.error()))
+        continue
+    try:
+        data=msg.value().decode('utf-8')
+        data = json.loads(data)
+        print("consuming....")
+        print(data)
+    except Exception as e:
+        print(e)
